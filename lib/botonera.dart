@@ -6,14 +6,15 @@ class Botonera extends StatefulWidget {
   const Botonera({Key? key}) : super(key: key);
 
   @override
-  State<Botonera> createState() => _BotoneraState();
+  State<Botonera> createState() => BotoneraState();
 }
 
-class _BotoneraState extends State<Botonera> {
+class BotoneraState extends State<Botonera> {
   List<EstadosCelda> estados = List.filled(9, EstadosCelda.empty);
   int xGanadas = 0;
   int oGanadas = 0;
   EstadosCelda estadoInicial = EstadosCelda.cross;
+  bool esEmpate = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +63,11 @@ class _BotoneraState extends State<Botonera> {
               }),
             ),
           ),
+          if (esEmpate)
+            const Text(
+              '¡Empate!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
         ],
       ),
     );
@@ -69,7 +75,7 @@ class _BotoneraState extends State<Botonera> {
 
   void onPress(int index) {
     debugPrint('Clicked $index');
-    if (estados[index] == EstadosCelda.empty) {
+    if (estados[index] == EstadosCelda.empty && !esEmpate) {
       setState(() {
         estados[index] = estadoInicial;
       });
@@ -86,6 +92,8 @@ class _BotoneraState extends State<Botonera> {
       if (estados[a] != EstadosCelda.empty) {
         if (estados[a] == estados[b] && estados[b] == estados[c]) {
           showResultDialog(estados[a]);
+        } else if (!estados.contains(EstadosCelda.empty)) {
+          showEmpateDialog();
         }
       }
     }
@@ -132,10 +140,63 @@ class _BotoneraState extends State<Botonera> {
     );
   }
 
+  void showEmpateDialog() {
+    setState(() {
+      esEmpate = true;
+    });
+  }
+
   void resetGame() {
     setState(() {
       estadoInicial = EstadosCelda.cross;
       estados = List.filled(9, EstadosCelda.empty);
+      esEmpate = false;
     });
+  }
+}
+
+class Index extends StatelessWidget {
+  const Index({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Juego del Gato'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'Salir') {
+                Navigator.of(context).pop();
+              } else if (value == 'Reiniciar') {
+                BotoneraState? botoneraState =
+                    context.findAncestorStateOfType<BotoneraState>();
+                if (botoneraState != null) {
+                  botoneraState.resetGame();
+                }
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'Salir',
+                child: Text('Salir de la app'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'Reiniciar',
+                child: Text('Reiniciar'),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: Stack(
+        children: <Widget>[
+          Image.asset('imagenes/board.png'),
+          const Center(
+            child: Botonera(),
+          ),
+        ],
+      ),
+    );
   }
 }
